@@ -31,6 +31,7 @@ const client = new MongoClient(uri, {
 async function run() {
   try {
     const usersCollection = client.db("houseHunter").collection("users");
+    const housesCollection = client.db("houseHunter").collection("houses");
     const signedInCollection = client
       .db("houseHunter")
       .collection("signedInUsers");
@@ -51,6 +52,26 @@ async function run() {
       res.send(result);
     });
 
+    //* getting total number of houses
+    app.get("/totalhouses", async (req, res) => {
+      const result = await housesCollection.estimatedDocumentCount();
+      res.send({ totalHouses: result });
+    });
+
+    //* get all houses in home page
+    app.get("/houses", async (req, res) => {
+      const { page, limit } = req.query;
+      const pageNumber = parseInt(page) || 0;
+      const limitNumber = parseInt(limit) || 10;
+      const skip = pageNumber * limitNumber;
+      const result = await housesCollection
+        .find()
+        .skip(skip)
+        .limit(limitNumber)
+        .toArray();
+      res.send(result);
+    });
+
     /* ---------------------------------------------------------
                           POST
     --------------------------------------------------------- */
@@ -60,7 +81,6 @@ async function run() {
       const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, {
         expiresIn: "4h",
       });
-      console.log(token);
       res.send({ token });
     });
 
