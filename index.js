@@ -100,6 +100,16 @@ async function run() {
       res.send(result);
     });
 
+    /* ---------------------------------------------------------
+                          DELETE
+    --------------------------------------------------------- */
+    //! delete user while user logout
+    app.delete("/signedinusers", async (req, res) => {
+      const query = req.body;
+      const result = await signedInCollection.deleteOne(query);
+      res.send(result);
+    });
+
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
     console.log(
