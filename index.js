@@ -30,12 +30,16 @@ const client = new MongoClient(uri, {
 async function run() {
   try {
     const usersCollection = client.db("houseHunter").collection("users");
+    const signedInCollection = client
+      .db("houseHunter")
+      .collection("signedInUsers");
     // Connect the client to the server	(optional starting in v4.7)
     client.connect();
 
     /* ---------------------------------------------------------
                           GET
     --------------------------------------------------------- */
+    //! get registered user data in signin component
     app.get("/users", async (req, res) => {
       const query = req.query;
       const result = await usersCollection.findOne(query);
@@ -61,6 +65,24 @@ async function run() {
         },
       };
       const result = await usersCollection.updateOne(query, updateDoc, options);
+      res.send(result);
+    });
+
+    //! put req while signing in old user
+    app.put("/signedinusers", async (req, res) => {
+      const data = req.body;
+      const query = { email: data.email };
+      const options = { upsert: true };
+      const updateDoc = {
+        $set: {
+          ...data,
+        },
+      };
+      const result = await signedInCollection.updateOne(
+        query,
+        updateDoc,
+        options
+      );
       res.send(result);
     });
 
