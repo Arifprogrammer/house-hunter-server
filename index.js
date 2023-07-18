@@ -32,6 +32,38 @@ async function run() {
     const usersCollection = client.db("houseHunter").collection("users");
     // Connect the client to the server	(optional starting in v4.7)
     client.connect();
+
+    /* ---------------------------------------------------------
+                          GET
+    --------------------------------------------------------- */
+    app.get("/users", async (req, res) => {
+      const query = req.query;
+      const result = await usersCollection.findOne(query);
+      if (result === null) {
+        const updateResult = { email: result };
+        return res.send(updateResult);
+      }
+      res.send(result);
+    });
+
+    /* ---------------------------------------------------------
+                          PUT
+    --------------------------------------------------------- */
+
+    //! put req while creating new user
+    app.put("/users", async (req, res) => {
+      const data = req.body;
+      const query = { email: data.email };
+      const options = { upsert: true };
+      const updateDoc = {
+        $set: {
+          ...data,
+        },
+      };
+      const result = await usersCollection.updateOne(query, updateDoc, options);
+      res.send(result);
+    });
+
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
     console.log(
