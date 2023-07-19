@@ -194,6 +194,24 @@ async function run() {
       res.send(result);
     });
 
+    //! put req to update date
+    app.put("/update", async (req, res) => {
+      const data = req.body;
+      const query = { _id: new ObjectId(req.query.id) };
+      const options = { upsert: true };
+      const updateDoc = {
+        $set: {
+          ...data,
+        },
+      };
+      const result = await housesCollection.updateOne(
+        query,
+        updateDoc,
+        options
+      );
+      res.send(result);
+    });
+
     /* ---------------------------------------------------------
                           DELETE
     --------------------------------------------------------- */
