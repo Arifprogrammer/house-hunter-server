@@ -16,6 +16,22 @@ const corsOptions = {
 app.use(cors(corsOptions));
 app.use(express.json());
 
+//* custom middlewares
+const verifyJWT = (req, res, next) => {
+  const authorization = req.headers.authorization;
+  if (!authorization) {
+    return res.status(401).send({ error: true, message: "unauthorize access" });
+  }
+  const token = authorization.split(" ")[1];
+  jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, (err, decoded) => {
+    if (err) {
+      return res.status(403).send({ error: true, message: "forbidden token" });
+    }
+    req.decoded = decoded;
+    next();
+  });
+};
+
 //* ingrating with mongoDB
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.ketp048.mongodb.net/?retryWrites=true&w=majority`;
 
@@ -32,6 +48,9 @@ async function run() {
   try {
     const usersCollection = client.db("houseHunter").collection("users");
     const housesCollection = client.db("houseHunter").collection("houses");
+    const bookedCollection = client
+      .db("houseHunter")
+      .collection("bookedhouses");
     const signedInCollection = client
       .db("houseHunter")
       .collection("signedInUsers");
@@ -102,6 +121,12 @@ async function run() {
         const result = await usersCollection.insertOne(data);
         res.send(result);
       }
+    });
+
+    //! post req form booking page
+    app.post("/bookhouse", verifyJWT, async (req, res) => {
+      const result = await bookedCollection.insertOne(req.body);
+      res.send(result);
     });
 
     /* ---------------------------------------------------------
