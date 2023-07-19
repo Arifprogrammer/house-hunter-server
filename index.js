@@ -98,6 +98,41 @@ async function run() {
       res.send(result);
     });
 
+    //! get booked houses
+    app.get("/bookedhouse", async (req, res) => {
+      const query = { renterEmail: req.query.email };
+      const result = await bookedCollection.find(query).toArray();
+      res.send(result);
+    });
+
+    //! get req to check the user role
+    app.get("/user/role/:email", verifyJWT, async (req, res) => {
+      const email = req.params.email;
+      if (req.decoded.email !== email) {
+        res.send({ student: false, admin: false, instructor: false });
+      }
+      const query = { email: email };
+      const role = await usersCollection.findOne(query);
+      const result = {
+        renter: role?.role === "House Renter",
+        owner: role?.role === "House Owner",
+      };
+      res.send(result);
+    });
+
+    //! get req from booked-house page
+    app.get("/dashboard/bookedhouse", verifyJWT, async (req, res) => {
+      const email = req.decoded.email;
+      if (email !== req.query.email) {
+        return res
+          .status(401)
+          .send({ error: true, message: "unauthorize user" });
+      }
+      const filter = { renterEmail: email };
+      const result = await bookedCollection.find(filter).toArray();
+      res.send(result);
+    });
+
     /* ---------------------------------------------------------
                           POST
     --------------------------------------------------------- */
@@ -158,6 +193,17 @@ async function run() {
     app.delete("/signedinusers", async (req, res) => {
       const query = req.body;
       const result = await signedInCollection.deleteOne(query);
+      res.send(result);
+    });
+
+    /* ---------------------------------------------------------
+                          DELETE
+    --------------------------------------------------------- */
+    //! delete req from booked houses page
+    app.delete("/dashboard/selected/:id", async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) };
+      const result = await bookedCollection.deleteOne(query);
       res.send(result);
     });
 
