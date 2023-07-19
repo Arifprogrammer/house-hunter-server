@@ -76,7 +76,6 @@ async function run() {
     app.get("/houses/:id", async (req, res) => {
       const query = { _id: new ObjectId(req.params.id) };
       const result = await housesCollection.findOne(query);
-      console.log(result);
       res.send(result);
     });
 
@@ -100,7 +99,7 @@ async function run() {
       if (existingResult) {
         res.send({ user: "exist" });
       } else {
-        const result = await usersCollection.insertOne(query);
+        const result = await usersCollection.insertOne(data);
         res.send(result);
       }
     });
