@@ -133,6 +133,14 @@ async function run() {
       res.send(result);
     });
 
+    //! get req from manage houses page
+    app.get("/dashboard/myhouses", verifyJWT, async (req, res) => {
+      const query = { ownerEmail: req.query.email };
+      const result = await housesCollection.find(query).toArray();
+      console.log(result);
+      res.send(result);
+    });
+
     /* ---------------------------------------------------------
                           POST
     --------------------------------------------------------- */
@@ -196,14 +204,19 @@ async function run() {
       res.send(result);
     });
 
-    /* ---------------------------------------------------------
-                          DELETE
-    --------------------------------------------------------- */
     //! delete req from booked houses page
     app.delete("/dashboard/selected/:id", async (req, res) => {
       const id = req.params.id;
       const query = { _id: new ObjectId(id) };
       const result = await bookedCollection.deleteOne(query);
+      res.send(result);
+    });
+
+    //! delete req from manage houses page
+    app.delete("/dashboard/selectedhouse/:id", async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) };
+      const result = await housesCollection.deleteOne(query);
       res.send(result);
     });
 
