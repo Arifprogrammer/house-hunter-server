@@ -4,7 +4,7 @@ const cors = require("cors");
 const app = express();
 const port = process.env.PORT || 5000;
 let jwt = require("jsonwebtoken");
-const { MongoClient, ServerApiVersion } = require("mongodb");
+const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 
 const corsOptions = {
   origin: "*",
@@ -72,6 +72,14 @@ async function run() {
       res.send(result);
     });
 
+    //! get specific house data
+    app.get("/houses/:id", async (req, res) => {
+      const query = { _id: new ObjectId(req.params.id) };
+      const result = await housesCollection.findOne(query);
+      console.log(result);
+      res.send(result);
+    });
+
     /* ---------------------------------------------------------
                           POST
     --------------------------------------------------------- */
@@ -84,23 +92,22 @@ async function run() {
       res.send({ token });
     });
 
+    //! post req while creating new user
+    app.post("/users", async (req, res) => {
+      const data = req.body;
+      const query = { email: data.email };
+      const existingResult = await usersCollection.findOne(query);
+      if (existingResult) {
+        res.send({ user: "exist" });
+      } else {
+        const result = await usersCollection.insertOne(query);
+        res.send(result);
+      }
+    });
+
     /* ---------------------------------------------------------
                           PUT
     --------------------------------------------------------- */
-
-    //! put req while creating new user
-    app.put("/users", async (req, res) => {
-      const data = req.body;
-      const query = { email: data.email };
-      const options = { upsert: true };
-      const updateDoc = {
-        $set: {
-          ...data,
-        },
-      };
-      const result = await usersCollection.updateOne(query, updateDoc, options);
-      res.send(result);
-    });
 
     //! put req while signing in old user
     app.put("/signedinusers", async (req, res) => {
