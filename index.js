@@ -109,10 +109,10 @@ async function run() {
     app.get("/user/role/:email", verifyJWT, async (req, res) => {
       const email = req.params.email;
       if (req.decoded.email !== email) {
-        res.send({ student: false, admin: false, instructor: false });
+        res.send({ renter: false, owner: false });
       }
       const query = { email: email };
-      const role = await usersCollection.findOne(query);
+      const role = await signedInCollection.findOne(query);
       const result = {
         renter: role?.role === "House Renter",
         owner: role?.role === "House Owner",
@@ -137,7 +137,48 @@ async function run() {
     app.get("/dashboard/myhouses", verifyJWT, async (req, res) => {
       const query = { ownerEmail: req.query.email };
       const result = await housesCollection.find(query).toArray();
-      console.log(result);
+      res.send(result);
+    });
+
+    //! get req from search
+    app.get("/searchhouse", async (req, res) => {
+      const query = { city: { $regex: req.query.city, $options: "i" } };
+      const result = await housesCollection.find(query).toArray();
+      res.send(result);
+    });
+
+    //! get filtered house
+    app.post("/filterhouse", async (req, res) => {
+      const userInput = req.body;
+      const query = {};
+      const properties = [
+        ["city", "availability", "roomSize"],
+        ["bathRooms", "bedRooms"],
+      ];
+      for (const property of properties[0]) {
+        if (userInput.hasOwnProperty(property)) {
+          query[property] = { $regex: userInput[property], $options: "i" };
+        }
+      }
+      for (const property of properties[1]) {
+        if (userInput.hasOwnProperty(property)) {
+          query[property] = userInput[property];
+        }
+      }
+      if (
+        userInput.hasOwnProperty("pricemin") ||
+        userInput.hasOwnProperty("pricemax")
+      ) {
+        query.price = {
+          $gte: userInput.pricemin || 0,
+          $lte: userInput.pricemax || Infinity,
+        };
+      }
+      const result = await housesCollection
+        .find({
+          $or: [query],
+        })
+        .toArray();
       res.send(result);
     });
 
@@ -148,7 +189,7 @@ async function run() {
     app.post("/jwt", (req, res) => {
       const user = req.body;
       const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, {
-        expiresIn: "4h",
+        expiresIn: "7d",
       });
       res.send({ token });
     });
@@ -169,6 +210,12 @@ async function run() {
     //! post req form booking page
     app.post("/bookhouse", verifyJWT, async (req, res) => {
       const result = await bookedCollection.insertOne(req.body);
+      res.send(result);
+    });
+
+    //! post req form add new house page
+    app.post("/newhouse", verifyJWT, async (req, res) => {
+      const result = await housesCollection.insertOne(req.body);
       res.send(result);
     });
 
